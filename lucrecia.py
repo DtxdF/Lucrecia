@@ -45,6 +45,28 @@ class Server(object):
 		return
 
 
+# Clase manipuladora FTP 
+
+class HandlingFTP(object):
+
+	def __init__(self,conn):
+
+		self.conn = conn
+
+	def QUIT(self):
+
+		self.conn.sendall(b'221 Goodbye.\n')
+		self.conn.close()
+
+		return 
+
+	def SYST(self):
+
+		self.conn.sendall(b'215 UNIX Type: L8\n')
+
+		return
+
+
 # Clase Honeypot
 
 class Honeypot(Server):
@@ -55,10 +77,7 @@ class Honeypot(Server):
 
 		self.user = "dinamic"
 		self.password = "toor"
-		self.isLogged = False
-		self.data_complete = False
 
-		self.attackers = []
 
 	def run(self):
 
@@ -70,17 +89,20 @@ class Honeypot(Server):
 
 			conn.sendall(b'220 (vsFTPd 3.0.3)\n')
 			
-			thread = Thread(target=self.FTP,args=(conn,))
+			thread = Thread(target=self.FTP,args=(conn,intruder,))
 			thread.start()
 
 		return
 
 
-	def FTP(self,client):
+	def FTP(self,connection,client):
+
+		self.isLogged = False
+		self.data_complete = False
 
 		while (True):
 
-			activity = (client.recv(2048)).decode(encoding="utf-8")
+			activity = (connection.recv(2048)).decode(encoding="utf-8")
 
 			if (activity.startswith("USER")):
 
@@ -88,7 +110,7 @@ class Honeypot(Server):
 
 				#print(self.user)
 
-				client.sendall(b"331 Please specify the password.\n")
+				connection.sendall(b"331 Please specify the password.\n")
 
 			elif (activity.startswith("PASS")):
 
@@ -101,7 +123,10 @@ class Honeypot(Server):
 
 					self.isLogged = True
 					self.data_complete = True
-					client.sendall('230 Login successful.\n'.encode())
+					
+					print("[\033[1;32m{}:{}\033[0;39m] Intruso ha iniciado sesión.".format(client[0],client[1]))
+
+					connection.sendall('230 Login successful.\n'.encode())
 
 					""" 00000000000000000000000000.\n"""
 					""" Remote system type is UNIX.\n"""
@@ -114,20 +139,25 @@ class Honeypot(Server):
 					 ((user!=self.user) and (password==self.password))):
 
 					self.data_complete = True
-					client.sendall(b'530 Login incorrect.\nLogin failed.\n')
 
-			print(activity)
+					print("[\033[1;32m{}:{}\033[0;39m] Intruso está intentando iniciar sesión con las credenciales: {} -> {}.".format(client[0],client[1],user,password))
 
-			if (activity.strip()=="QUIT"):
-				client.sendall(b'221 Goodbye.\n')
-				client.close()
+					connection.sendall(b'530 Login incorrect.\nLogin failed.\n')
+
+			#print(activity)
+
+			activity = activity.strip()
+
+			handler = HandlingFTP(connection)
+
+			if activity=="QUIT":
+				handler.QUIT()
 				break
 
-			elif (self.isLogged!=False) and (activity.strip()=="SYST"):
-				client.sendall(b'215 UNIX Type: L8\n')
+			elif (self.isLogged==True) and (activity=="SYST"):
+				handler.SYST()
 
 		return
-
 
 
 def banner():
