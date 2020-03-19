@@ -14,7 +14,6 @@ Lucrecia es un simple honeypot de media interacción para el servicio FTP.
 
 ```
 git clone https://github.com/Kirari-Senpai/Lucrecia.git
-
 ```
 
 ## Instalar dependencias ##
