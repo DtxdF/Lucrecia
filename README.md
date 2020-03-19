@@ -1,6 +1,6 @@
 # Lucrecia
-
-<p align="center">
+<p align="left">
+    #Futura imagen#
     <br><br>
     <img src="https://img.shields.io/badge/Hecho%20en-Python3-orange">
     <a href="https://github.com/Kirari-Senpai"><img src="https://img.shields.io/badge/Creado%20por-Kirari-green"></a>
