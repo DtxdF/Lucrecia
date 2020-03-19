@@ -66,6 +66,20 @@ class HandlingFTP(object):
 
 		return
 
+	def PWD(self):
+		
+		pwd = b"/"
+
+		self.conn.sendall(b'257 "'+pwd+b'" is the current directory\n')
+
+		return
+
+
+	def FTPerror(self):
+
+		self.conn.sendall(b'530 Please login with USER and PASS.\n')
+
+		return
 
 # Clase Honeypot
 
@@ -97,65 +111,76 @@ class Honeypot(Server):
 
 	def FTP(self,connection,client):
 
-		self.isLogged = False
-		self.data_complete = False
+		# Vericar si el atacante se logueo
+		self.isLoggedIn = False
 
-		while (True):
+		# Datos enviados por atacante
+		activity = (connection.recv(2048)).decode(encoding="utf-8")
+		
+		# Manipulador de comandos FTP
+		handler = HandlingFTP(connection)
+
+
+		while (activity!="QUIT"):
+
+			if (self.isLoggedIn==False):
+
+				if (activity.startswith("USER")):
+
+					user = (activity.strip()).split()[1]
+
+					#print(self.user)
+
+					connection.sendall(b"331 Please specify the password.\n")
+
+				elif (activity.startswith("PASS")):
+
+					password = (activity.strip()).split()[1]
+
+					#print(self.password)
+
+					if (user==self.user) and (password==self.password):
+
+						#print("[\033[1;32m{}:{}\033[0;39m] Intruso ha iniciado sesión.".format(client[0],client[1]))
+
+						connection.sendall('230 Login successful.\n'.encode())
+
+						self.isLoggedIn = True
+
+						""" 00000000000000000000000000.\n"""
+						""" Remote system type is UNIX.\n"""
+						""" Using binary mode to transfer files.\n"""
+
+						#conn.sendall(b'Remote system type is UNIX.\n')
+
+					elif ((user!=self.user) and (password!=self.password)) or \
+						 ((user==self.user) and (password!=self.password)) or \
+						 ((user!=self.user) and (password==self.password)):
+
+
+						#print("[\033[1;32m{}:{}\033[0;39m] Intruso está intentando iniciar sesión con las credenciales: {} -> {}.".format(client[0],client[1],user,password))
+
+						connection.sendall(b'530 Login incorrect.\n')
+
+				else:
+					handler.FTPerror()	
+
+			else:
+
+				if (activity=="SYST") and (self.isLoggedIn==True):
+					handler.SYST()
+
+				elif (activity=="PWD"):
+					handler.PWD()
 
 			activity = (connection.recv(2048)).decode(encoding="utf-8")
-
-			if (activity.startswith("USER")):
-
-				user = (activity.strip()).split()[1]
-
-				#print(self.user)
-
-				connection.sendall(b"331 Please specify the password.\n")
-
-			elif (activity.startswith("PASS")):
-
-				password = (activity.strip()).split()[1]
-
-				#print(self.password)
-
-
-				if (self.isLogged==False) and ((user==self.user) and (password==self.password)):
-
-					self.isLogged = True
-					self.data_complete = True
-					
-					print("[\033[1;32m{}:{}\033[0;39m] Intruso ha iniciado sesión.".format(client[0],client[1]))
-
-					connection.sendall('230 Login successful.\n'.encode())
-
-					""" 00000000000000000000000000.\n"""
-					""" Remote system type is UNIX.\n"""
-					""" Using binary mode to transfer files.\n"""
-
-					#conn.sendall(b'Remote system type is UNIX.\n')
-
-				elif (self.isLogged==False) or (((user!=self.user) and (password!=self.password)) or \
-					 ((user==self.user) and (password!=self.password)) or \
-					 ((user!=self.user) and (password==self.password))):
-
-					self.data_complete = True
-
-					print("[\033[1;32m{}:{}\033[0;39m] Intruso está intentando iniciar sesión con las credenciales: {} -> {}.".format(client[0],client[1],user,password))
-
-					connection.sendall(b'530 Login incorrect.\nLogin failed.\n')
-
-			#print(activity)
-
 			activity = activity.strip()
 
-			handler = HandlingFTP(connection)
 
-			if activity=="QUIT":
-				handler.QUIT()
-				break
+			print("Petición: ",activity)
+			
 
-			elif (self.isLogged==True) and (activity=="SYST"):
-				handler.SYST()
+		handler.QUIT()
 
 		return
 
