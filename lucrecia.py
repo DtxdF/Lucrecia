@@ -81,6 +81,10 @@ class HandlingFTP(object):
 
 		return
 
+	def LIMIT_HP(self):
+
+		self.conn.sendall(b'550 Permission denied.\n')
+
 # Clase Honeypot
 
 class Honeypot(Server):
@@ -141,7 +145,7 @@ class Honeypot(Server):
 
 					if (user==self.user) and (password==self.password):
 
-						#print("[\033[1;32m{}:{}\033[0;39m] Intruso ha iniciado sesión.".format(client[0],client[1]))
+						print("[\033[1;32m{}:{}\033[0;39m] Intruso ha iniciado sesión.".format(client[0],client[1]))
 
 						connection.sendall('230 Login successful.\n'.encode())
 
@@ -151,14 +155,13 @@ class Honeypot(Server):
 						""" Remote system type is UNIX.\n"""
 						""" Using binary mode to transfer files.\n"""
 
-						#conn.sendall(b'Remote system type is UNIX.\n')
 
 					elif ((user!=self.user) and (password!=self.password)) or \
 						 ((user==self.user) and (password!=self.password)) or \
 						 ((user!=self.user) and (password==self.password)):
 
 
-						#print("[\033[1;32m{}:{}\033[0;39m] Intruso está intentando iniciar sesión con las credenciales: {} -> {}.".format(client[0],client[1],user,password))
+						print("[\033[1;32m{}:{}\033[0;39m] Intruso está intentando iniciar sesión con las credenciales: {} -> {}.".format(client[0],client[1],user,password))
 
 						connection.sendall(b'530 Login incorrect.\n')
 
@@ -173,12 +176,15 @@ class Honeypot(Server):
 				elif (activity=="PWD"):
 					handler.PWD()
 
+				else:
+					handler.LIMIT_HP()
+
 			activity = (connection.recv(2048)).decode(encoding="utf-8")
 			activity = activity.strip()
 
 
 			print("Petición: ",activity)
-			
+
 
 		handler.QUIT()
 
