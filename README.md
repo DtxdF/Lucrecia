@@ -42,4 +42,4 @@ PASSWORD = test
 
 ## Uso de Lucrecia Honeypot ##
 
-<img src="img/img1.png" height="600" width="620">
+<img src="img/img1.png" height="600" width="635">
