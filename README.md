@@ -39,3 +39,7 @@ USER = test
 PASSWORD = test
 
 ```
+
+## Uso de Lucrecia Honeypot ##
+
+<img src="img/img.png" height="300" width="400">
