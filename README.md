@@ -9,3 +9,29 @@
     
 Lucrecia es un simple honeypot de media interacción para el servicio FTP.
 </p>
+
+## Cómo descargar e instalar? ##
+
+```
+git clone https://github.com/Kirari-Senpai/Lucrecia.git
+cd Lucrecia/
+pip3 install -r requirements.txt
+```
+
+## Configurar servidor ##
+
+Abrimos el archivo "server.conf" con el editor que les parezca más cómodo. Entonces editan como más les guste:
+
+```
+[DEFAULT]
+
+HOST = 0.0.0.0
+PORT = 21
+
+
+[FTP]
+
+USER = test
+PASSWORD = test
+
+```
