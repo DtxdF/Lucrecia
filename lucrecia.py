@@ -96,12 +96,12 @@ class HandlingFTP(object):
 
 class Honeypot(Server):
 
-	def __init__(self,host,port):
+	def __init__(self,conf):
 
-		Server.__init__(self,host,port)
+		Server.__init__(self,conf[0],conf[1])
 
-		self.user = "dinamic"
-		self.password = "toor"
+		self.user = conf[2]
+		self.password = conf[3]
 
 
 	def run(self):
@@ -124,6 +124,8 @@ class Honeypot(Server):
 
 		# Vericar si el atacante se logueo
 		self.isLoggedIn = False
+
+		print(" [\033[1;32mIntruder detected\033[1;39m] Someone has accessed the FTP service from {} through port {}.".format(client[0],client[1]))
 
 		# Datos enviados por atacante
 		activity = (connection.recv(2048)).decode(encoding="utf-8")
@@ -152,8 +154,8 @@ class Honeypot(Server):
 
 					if (user==self.user) and (password==self.password):
 
-						print("[\033[1;32mIntruso detectado\033[1;39m] He's logged in from {} through port {}.".format(client[0],client[1]))
-						print("[\033[1;32mDatetime\033[1;39m] {}\n".format(dt.now()))
+						print(" [\033[1;32mInfo\033[1;39m] {} has logged in.".format(client[0]))
+						print(" [\033[1;32mDatetime\033[1;39m] {}".format(dt.now()))
 
 						connection.sendall('230 Login successful.\n'.encode())
 
@@ -169,27 +171,27 @@ class Honeypot(Server):
 						 ((user!=self.user) and (password==self.password)):
 
 
-						print("[\033[1;32mIntruso detectado\033[1;39m] Intruder is trying to log in with credentials: {} -> {}.".format(user,password))
-						print("[\033[1;32mDatetime\033[1;39m] {}\n".format(dt.now()))
+						print(" [\033[1;32mInfo\033[1;39m] Intruder is trying to log in with credentials: {} -> {}.".format(user,password))
+						print(" [\033[1;32mDatetime\033[1;39m] {}".format(dt.now()))
 
 						connection.sendall(b'530 Login incorrect.\n')
 
 				else:
-					print("[\033[1;32m{}-Movement\033[1;39m] The intruder is trying to execute commands".format(client[0]))
+					print(" [\033[1;32m{}-Movement\033[1;39m] The intruder is trying to execute commands".format(client[0]))
 					handler.FTPerror()	
 
 			else:
 
 				if (activity=="SYST") and (self.isLoggedIn==True):
-					print("[\033[1;32m{}-Movement\033[1;39m] TThe intruder is executing commands.".format(client[0]))
+					print(" [\033[1;32m{}-Movement\033[1;39m] The intruder is executing commands.".format(client[0]))
 					handler.SYST()
 
 				elif (activity=="PWD"):
-					print("[\033[1;32m{}-Movement\033[1;39m] The intruder is using the {} command.".format(client[0],activity))
+					print(" [\033[1;32m{}-Movement\033[1;39m] The intruder is using the {} command.".format(client[0],activity))
 					handler.PWD()
 
 				else:
-					print("[\033[1;32m{}-Movement\033[1;39m] Access to {} has been denied to run some commands".format(client[0],client[0]))
+					print(" [\033[1;32m{}-Movement\033[1;39m] Access to {} has been denied to run some commands".format(client[0],client[0]))
 					handler.LIMIT_HP()
 
 			activity = (connection.recv(2048)).decode(encoding="utf-8")
@@ -200,7 +202,7 @@ class Honeypot(Server):
 
 
 		handler.QUIT()
-		print("[\033[1;32m{}-Movement\033[1;39m] Intruder has disconnected.".format(client[0]))
+		print(" [\033[1;32m{}-Movement\033[1;39m] Intruder has disconnected.".format(client[0]))
 
 		return
 
@@ -224,11 +226,11 @@ def banner():
 	return msg
 
 
-def preparate(host,port):
+def preparate(conf):
 
 	try:
 
-		honeypot = Honeypot(host,port)
+		honeypot = Honeypot(conf)
 		honeypot.start()
 		honeypot.run()
 		honeypot.stop()
@@ -236,6 +238,8 @@ def preparate(host,port):
 	except KeyboardInterrupt:
 
 		honeypot.stop() 
+
+		print ("\n\n \033[1;39m[\033[1;32m+\033[1;39m] Thank you so much for use Lucrecia Honeypot! Bye bye...\n")
 
 	return
 
@@ -251,7 +255,12 @@ def FileConfiguration(file):
 	host = sectionDefault["HOST"]
 	port = int(sectionDefault["PORT"])
 
-	return host,port
+	sectionFTP = config["FTP"]
+
+	user = sectionFTP["USER"]
+	password = sectionFTP["PASSWORD"]
+
+	return (host,port,user,password)
 
 
 def main():
@@ -289,7 +298,7 @@ def main():
 
 			#print(fconf)
 
-			preparate(fconf[0],fconf[1])
+			preparate(fconf)
 
 	elif (args.host!=None):
 
@@ -311,3 +320,6 @@ def main():
 if __name__ == '__main__':
 
 	main()
+
+
+# ESPERO QUE DISFRUTEN DE ESTA PEQUEÑA TOOL :)
