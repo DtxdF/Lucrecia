@@ -1,6 +1,6 @@
 # Lucrecia
 <p align="left">
-    <img src="img/LucreciaLogo.jpg" width="100" height="100">
+    <img src="img/LucreciaLogo.jpg" width="500" height="500">
     <br><br>
     <img src="https://img.shields.io/badge/Hecho%20en-Python3-orange">
     <a href="https://github.com/Kirari-Senpai"><img src="https://img.shields.io/badge/Creado%20por-Kirari-green"></a>
