@@ -15,6 +15,7 @@ from threading import Thread
 from datetime import datetime as dt
 from argparse import RawTextHelpFormatter
 
+
 # Clase servidor
 
 class Server(object):
@@ -40,8 +41,6 @@ class Server(object):
 		self.create_socket()
 		self.server.bind((self.host,self.port))
 		self.server.listen(10)
-
-		print (" \033[1;39m[\033[1;34m*\033[1;39m] Honeypot Activaded...\n")
 
 		return 
 
@@ -75,7 +74,7 @@ class HandlingFTP(object):
 
 	def PWD(self):
 		
-		pwd = b"/"
+		pwd = b"/home/kirari/server/"
 
 		self.conn.sendall(b'257 "'+pwd+b'" is the current directory\n')
 
@@ -103,6 +102,8 @@ class Honeypot(Server):
 		self.user = conf[2]
 		self.password = conf[3]
 
+		print (" \033[1;39m[\033[1;34m*\033[1;39m] Honeypot Activaded...\n\033[0;39m")
+
 
 	def run(self):
 
@@ -115,9 +116,22 @@ class Honeypot(Server):
 			conn.sendall(b'220 (vsFTPd 3.0.3)\n')
 			
 			thread = Thread(target=self.FTP,args=(conn,intruder,))
+			threads.append(thread)
+			thread.setDaemon(True)
 			thread.start()
 
 		return
+
+	@staticmethod
+	def CalcTime():
+
+		datetime = dt.now()
+
+		time_ = "{}:{}:{}".format(datetime.hour,datetime.minute,datetime.second)
+
+		date_ = "{}/{}/{}".format(datetime.day,datetime.month,datetime.year)
+
+		return (time_,date_)
 
 
 	def FTP(self,connection,client):
@@ -125,7 +139,7 @@ class Honeypot(Server):
 		# Vericar si el atacante se logueo
 		self.isLoggedIn = False
 
-		print(" [\033[1;32mIntruder detected\033[1;39m] Someone has accessed the FTP service from {} through port {}.".format(client[0],client[1]))
+		print(" [\033[1;33mWARNING\033[0;39m] Someone has accessed the FTP service from {} through port {}.".format(client[0],client[1]))
 
 		# Datos enviados por atacante
 		activity = (connection.recv(2048)).decode(encoding="utf-8")
@@ -154,8 +168,10 @@ class Honeypot(Server):
 
 					if (user==self.user) and (password==self.password):
 
-						print(" [\033[1;32mInfo\033[1;39m] {} has logged in.".format(client[0]))
-						print(" [\033[1;32mDatetime\033[1;39m] {}".format(dt.now()))
+						dt_now = self.CalcTime()
+
+						print(" [\033[1;34m{}\033[0;39m] The intruder is logged in at {} on {}.".format(client[0],dt_now[0],dt_now[1]))
+						#print(" [\033[1;32mDATETIME\033[1;39m] {}".format(dt.now()))
 
 						connection.sendall('230 Login successful.\n'.encode())
 
@@ -170,28 +186,29 @@ class Honeypot(Server):
 						 ((user==self.user) and (password!=self.password)) or \
 						 ((user!=self.user) and (password==self.password)):
 
+						dt_now = self.CalcTime()
 
-						print(" [\033[1;32mInfo\033[1;39m] Intruder is trying to log in with credentials: {} -> {}.".format(user,password))
-						print(" [\033[1;32mDatetime\033[1;39m] {}".format(dt.now()))
+						print(" [\033[1;32mINFO\033[0;39m] Intruder {} is trying to log in with credentials: {} -> {} at {} on {}".format(client[0],user,password,dt_now[0],dt_now[1]))
+						#print(" [\033[1;32mDatetime\033[1;39m] {}".format(dt.now()))
 
 						connection.sendall(b'530 Login incorrect.\n')
 
 				else:
-					print(" [\033[1;32m{}-Movement\033[1;39m] The intruder is trying to execute commands".format(client[0]))
+					print(" [\033[1;31m{}\033[0;39m] The intruder is trying to execute commands".format(client[0]))
 					handler.FTPerror()	
 
 			else:
 
 				if (activity=="SYST") and (self.isLoggedIn==True):
-					print(" [\033[1;32m{}-Movement\033[1;39m] The intruder is executing commands.".format(client[0]))
+					print(" [\033[1;31m{}\033[0;39m] The intruder is executing commands.".format(client[0]))
 					handler.SYST()
 
 				elif (activity=="PWD"):
-					print(" [\033[1;32m{}-Movement\033[1;39m] The intruder is using the {} command.".format(client[0],activity))
+					print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
 					handler.PWD()
 
 				else:
-					print(" [\033[1;32m{}-Movement\033[1;39m] Access to {} has been denied to run some commands".format(client[0],client[0]))
+					print(" [\033[1;32mINFO\033[0;39m] Access to {} has been denied to run some commands".format(client[0],client[0]))
 					handler.LIMIT_HP()
 
 			activity = (connection.recv(2048)).decode(encoding="utf-8")
@@ -202,7 +219,7 @@ class Honeypot(Server):
 
 
 		handler.QUIT()
-		print(" [\033[1;32m{}-Movement\033[1;39m] Intruder has disconnected.".format(client[0]))
+		print(" [\033[1;34m{}\033[0;39m] Intruder has disconnected.".format(client[0]))
 
 		return
 
@@ -304,12 +321,13 @@ def main():
 
 		if (args.host!=None) and (args.port):
 
-			preparate(args.host,args.port)
-
+			preparate(args.host,args.port)		
 
 	else:
 
-		print ("\033[1;39m[\033[1;31mx\033[1;39m] Arguments are missing to start the Honeypot\n")
+		#print(args)
+
+		#print ("\033[1;39m[\033[1;31mx\033[1;39m] Arguments are missing to start the Honeypot\n")
 
 		parser.print_help(sys.stderr)
 
