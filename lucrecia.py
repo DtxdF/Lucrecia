@@ -89,9 +89,9 @@ class HandlingFTP(object):
 		return
 
 
-	def PWD(self):
+	def PWD(self,directory):
 		
-		pwd = b"/home/kirari/server/"
+		pwd = bytes(directory,"utf-8")
 
 		self.conn.sendall(b'257 "'+pwd+b'" is the current directory\n')
 
@@ -115,7 +115,7 @@ class HandlingFTP(object):
 		self.conn.sendall(b"421 Service not available, remote server has closed connection\n")
 
 		return
-		
+
 
 
 # Clase Honeypot
@@ -128,6 +128,7 @@ class Honeypot(Server):
 
 		self.user = conf[2]
 		self.password = conf[3]
+		self.currentDirectory = conf[4]
 
 		print (" \033[1;39m[\033[1;34m*\033[1;39m] Honeypot Activaded...\n\033[0;39m")
 
@@ -240,7 +241,7 @@ class Honeypot(Server):
 
 					elif (activity=="PWD"):
 						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
-						handler.PWD()
+						handler.PWD(self.currentDirectory)
 
 					elif (activity=="CDUP"):
 						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
@@ -333,8 +334,9 @@ def FileConfiguration(file):
 
 	user = sectionFTP["USER"]
 	password = sectionFTP["PASSWORD"]
+	currentDirectory = sectionFTP["CURRENT_DIRECTORY"]
 
-	return (host,port,user,password)
+	return (host,port,user,password,currentDirectory)
 
 
 def main():
@@ -343,7 +345,7 @@ def main():
 
 	print(banner())
 	
-	parser = argparse.ArgumentParser()
+	parser = argparse.ArgumentParser(add_help=False)
 
 	parser.formatter_class = RawTextHelpFormatter
 	parser.description = "\033[1;34m<Honeypot FTP - Medium Interaction>\033[0;39m"
@@ -356,8 +358,11 @@ def main():
 		"""
 
 	sArgs = parser.add_argument_group('\033[1;33mServer Arguments\033[0;39m')
-	sArgs.add_argument('-H', '--host', help='Host server', type=str)
-	sArgs.add_argument('-P', '--port', help='Port server', type=int, default=21)
+	sArgs.add_argument('-h', '--host', help='IP server', type=str)
+	sArgs.add_argument('-p', '--port', help='Port server', type=int, default=21)
+	sArgs.add_argument('--directory', help='Set honeypot\'s current directory', type=str, default="/home/test/Server/", metavar="")
+	sArgs.add_argument('-U','--user', help="Set user", type=str, default="Testing")
+	sArgs.add_argument('-P','--password', help="Set password", type=str, default="toor", metavar="")
 
 	fArgs = parser.add_argument_group('\033[1;33mServer File Arguments\033[0;39m')
 	fArgs.add_argument('-f', '--file', help='File configurations')
@@ -374,11 +379,23 @@ def main():
 
 			preparate(fconf)
 
-	elif (args.host!=None):
+		else:
 
-		if (args.host!=None) and (args.port):
+			print ("\033[1;39m [\033[1;31mx\033[1;39m] File does not exist.\n")
 
-			preparate(args.host,args.port)		
+
+	elif (args.host!=None) and \
+		 (args.port) and \
+		 (args.directory) and \
+		 (args.user) and \
+		 (args.password) and \
+		 (args.directory):
+
+			conf = (args.host,args.port,args.user,args.password,args.directory,)
+
+			preparate(conf)		
+
+		#	print ("\033[1;39m [\033[1;31mx\033[1;39m] Some arguments may be wrong.\n")
 
 	else:
 
