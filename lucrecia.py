@@ -371,6 +371,12 @@ def main():
 
 	if (args.file != None):
 
+		args.host = None
+		args.port = None
+		args.directory = None
+		args.user = None
+		args.password = None
+
 		if isfile(args.file):
 			
 			fconf = FileConfiguration(args.file)
