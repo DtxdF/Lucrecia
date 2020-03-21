@@ -233,8 +233,6 @@ class Honeypot(Server):
 
 				else:
 
-					print (activity)
-
 					if (activity=="SYST") and (self.isLoggedIn==True):
 						print(" [\033[1;31m{}\033[0;39m] The intruder is executing commands.".format(client[0]))
 						handler.SYST()
