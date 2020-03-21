@@ -16,6 +16,9 @@ from datetime import datetime as dt
 from argparse import RawTextHelpFormatter
 
 
+
+threads = []
+
 # Clase servidor
 
 class Server(object):
@@ -107,6 +110,8 @@ class Honeypot(Server):
 
 	def run(self):
 
+		cont = 1
+
 		while (True):
 
 			(conn,intruder) = self.server.accept() 	
@@ -115,10 +120,12 @@ class Honeypot(Server):
 
 			conn.sendall(b'220 (vsFTPd 3.0.3)\n')
 			
-			thread = Thread(target=self.FTP,args=(conn,intruder,))
+			thread = Thread(name="Intruder "+str(cont),target=self.FTP,args=(conn,intruder,))
 			threads.append(thread)
 			thread.setDaemon(True)
 			thread.start()
+
+			cont += 1
 
 		return
 
@@ -250,9 +257,18 @@ def preparate(conf):
 		honeypot = Honeypot(conf)
 		honeypot.start()
 		honeypot.run()
-		honeypot.stop()
+		#honeypot.stop()
 
 	except KeyboardInterrupt:
+
+		print("\n")
+
+		for _ in threads:
+
+			if (_.isAlive()):
+
+				print (" [*] "+_.name+" disconnected.")
+				time.sleep(1)
 
 		honeypot.stop() 
 
