@@ -94,6 +94,15 @@ class HandlingFTP(object):
 
 		self.conn.sendall(b'550 Permission denied.\n')
 
+		return
+
+	def DISCONNECT(self):
+
+		self.conn.sendall(b"421 Service not available, remote server has closed connection\n")
+
+		return
+
+
 # Clase Honeypot
 
 class Honeypot(Server):
@@ -143,90 +152,97 @@ class Honeypot(Server):
 
 	def FTP(self,connection,client):
 
-		# Vericar si el atacante se logueo
-		self.isLoggedIn = False
+		try:
 
-		print(" [\033[1;33mWARNING\033[0;39m] Someone has accessed the FTP service from {} through port {}.".format(client[0],client[1]))
+			# Vericar si el atacante se logueo
+			self.isLoggedIn = False
 
-		# Datos enviados por atacante
-		activity = (connection.recv(2048)).decode(encoding="utf-8")
-		
-		# Manipulador de comandos FTP
-		handler = HandlingFTP(connection)
+			print(" [\033[1;33mWARNING\033[0;39m] Someone has accessed the FTP service from {} through port {}.".format(client[0],client[1]))
 
-
-		while (activity!="QUIT"):
-
-			if (self.isLoggedIn==False):
-
-				if (activity.startswith("USER")):
-
-					user = (activity.strip()).split()[1]
-
-					#print(self.user)
-
-					connection.sendall(b"331 Please specify the password.\n")
-
-				elif (activity.startswith("PASS")):
-
-					password = (activity.strip()).split()[1]
-
-					#print(self.password)
-
-					if (user==self.user) and (password==self.password):
-
-						dt_now = self.CalcTime()
-
-						print(" [\033[1;34m{}\033[0;39m] The intruder is logged in at {} on {}.".format(client[0],dt_now[0],dt_now[1]))
-						#print(" [\033[1;32mDATETIME\033[1;39m] {}".format(dt.now()))
-
-						connection.sendall('230 Login successful.\n'.encode())
-
-						self.isLoggedIn = True
-
-						""" 00000000000000000000000000.\n"""
-						""" Remote system type is UNIX.\n"""
-						""" Using binary mode to transfer files.\n"""
-
-
-					elif ((user!=self.user) and (password!=self.password)) or \
-						 ((user==self.user) and (password!=self.password)) or \
-						 ((user!=self.user) and (password==self.password)):
-
-						dt_now = self.CalcTime()
-
-						print(" [\033[1;32mINFO\033[0;39m] Intruder {} is trying to log in with credentials: {} -> {} at {} on {}".format(client[0],user,password,dt_now[0],dt_now[1]))
-						#print(" [\033[1;32mDatetime\033[1;39m] {}".format(dt.now()))
-
-						connection.sendall(b'530 Login incorrect.\n')
-
-				else:
-					print(" [\033[1;31m{}\033[0;39m] The intruder is trying to execute commands".format(client[0]))
-					handler.FTPerror()	
-
-			else:
-
-				if (activity=="SYST") and (self.isLoggedIn==True):
-					print(" [\033[1;31m{}\033[0;39m] The intruder is executing commands.".format(client[0]))
-					handler.SYST()
-
-				elif (activity=="PWD"):
-					print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
-					handler.PWD()
-
-				else:
-					print(" [\033[1;32mINFO\033[0;39m] Access to {} has been denied to run some commands".format(client[0],client[0]))
-					handler.LIMIT_HP()
-
+			# Datos enviados por atacante
 			activity = (connection.recv(2048)).decode(encoding="utf-8")
-			activity = activity.strip()
+			
+			# Manipulador de comandos FTP
+			handler = HandlingFTP(connection)
 
 
-			#print("Petición: ",activity)
+			while (activity!="QUIT"):
+
+				if (self.isLoggedIn==False):
+
+					if (activity.startswith("USER")):
+
+						user = (activity.strip()).split()[1]
+
+						#print(self.user)
+
+						connection.sendall(b"331 Please specify the password.\n")
+
+					elif (activity.startswith("PASS")):
+
+						password = (activity.strip()).split()[1]
+
+						#print(self.password)
+
+						if (user==self.user) and (password==self.password):
+
+							dt_now = self.CalcTime()
+
+							print(" [\033[1;34m{}\033[0;39m] The intruder is logged in at {} on {}.".format(client[0],dt_now[0],dt_now[1]))
+							#print(" [\033[1;32mDATETIME\033[1;39m] {}".format(dt.now()))
+
+							connection.sendall('230 Login successful.\n'.encode())
+
+							self.isLoggedIn = True
+
+							""" 00000000000000000000000000.\n"""
+							""" Remote system type is UNIX.\n"""
+							""" Using binary mode to transfer files.\n"""
 
 
-		handler.QUIT()
-		print(" [\033[1;34m{}\033[0;39m] Intruder has disconnected.".format(client[0]))
+						elif ((user!=self.user) and (password!=self.password)) or \
+							 ((user==self.user) and (password!=self.password)) or \
+							 ((user!=self.user) and (password==self.password)):
+
+							dt_now = self.CalcTime()
+
+							print(" [\033[1;32mINFO\033[0;39m] Intruder {} is trying to log in with credentials: {} -> {} at {} on {}".format(client[0],user,password,dt_now[0],dt_now[1]))
+							#print(" [\033[1;32mDatetime\033[1;39m] {}".format(dt.now()))
+
+							connection.sendall(b'530 Login incorrect.\n')
+
+					else:
+						print(" [\033[1;31m{}\033[0;39m] The intruder is trying to execute commands".format(client[0]))
+						handler.FTPerror()	
+
+				else:
+
+					if (activity=="SYST") and (self.isLoggedIn==True):
+						print(" [\033[1;31m{}\033[0;39m] The intruder is executing commands.".format(client[0]))
+						handler.SYST()
+
+					elif (activity=="PWD"):
+						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
+						handler.PWD()
+
+					else:
+						print(" [\033[1;32mINFO\033[0;39m] Access to {} has been denied to run some commands".format(client[0],client[0]))
+						handler.LIMIT_HP()
+
+				activity = (connection.recv(2048)).decode(encoding="utf-8")
+				activity = activity.strip()
+
+
+				#print("Petición: ",activity)
+
+
+			handler.QUIT()
+			print(" [\033[1;34m{}\033[0;39m] Intruder has disconnected.".format(client[0]))
+
+
+		except KeyboardInterrupt:
+
+			handler.DISCONNECT()
 
 		return
 
