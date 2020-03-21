@@ -75,6 +75,20 @@ class HandlingFTP(object):
 
 		return
 
+	def CDUP(self):
+
+		self.conn.sendall(b'250 Directory successfully changed.\n')
+
+		return
+
+
+	def USER(self):
+
+		self.conn.sendall(b'530 Can\'t change to another user.\n')
+
+		return
+
+
 	def PWD(self):
 		
 		pwd = b"/home/kirari/server/"
@@ -101,6 +115,7 @@ class HandlingFTP(object):
 		self.conn.sendall(b"421 Service not available, remote server has closed connection\n")
 
 		return
+		
 
 
 # Clase Honeypot
@@ -217,6 +232,8 @@ class Honeypot(Server):
 
 				else:
 
+					print (activity)
+
 					if (activity=="SYST") and (self.isLoggedIn==True):
 						print(" [\033[1;31m{}\033[0;39m] The intruder is executing commands.".format(client[0]))
 						handler.SYST()
@@ -224,6 +241,14 @@ class Honeypot(Server):
 					elif (activity=="PWD"):
 						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
 						handler.PWD()
+
+					elif (activity=="CDUP"):
+						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
+						handler.CDUP()
+
+					elif (activity.startswith("USER")):
+						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
+						handler.USER()
 
 					else:
 						print(" [\033[1;32mINFO\033[0;39m] Access to {} has been denied to run some commands".format(client[0],client[0]))
