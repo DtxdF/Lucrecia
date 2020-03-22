@@ -61,6 +61,94 @@ class HandlingFTP(object):
 	def __init__(self,conn):
 
 		self.conn = conn
+		self.passive_mode = False
+
+
+	def start_new_connection(self):
+	
+		if self.passive_mode:
+
+			self.socket_, cData = self.dataServer.accept()
+
+		else:
+
+			self.socket_ = socket.socket(socket.AF_INET,socket.SOCK_STREAM) 
+			self.socket_.connect((self.dataIP,self.dataPort))
+
+		return
+
+
+	def stop_new_connection(self):
+
+		self.socket_.close()
+
+		if self.passive_mode:
+
+			self.dataServer.close()	
+
+		return
+
+
+	''' Modo activo por defecto '''
+
+	''' Este modo funciona cuando el cliente solicita el servidor, enviando un comando PORT, a través de un puerto aleatorio, 
+	    con un paquete dirigido al puerto 21 (puede ser otro), a fin de transferir un archivo. Una vez establecida la conexión, 
+	    el servidor inicia otra.
+
+		El servidor, a través del puerto 20, se pone en contacto inmediatamente con el puerto siguiente del cliente, es decir, 
+		imaginemos que el puerto utilizado en la primera conexión, por este, fue el 1500, la utilizada a efectos de la segunda 
+		conexión será la 1501 (por ejemplo), canal de datos. ''' 
+
+
+	def PORT(self,data):
+
+		self.passive_mode = False
+
+		data_client = data.split(',')
+
+		self.dataIP = '.'.join(data_client[:4])
+		self.dataPort = (int(data_client[4])*256)+int(data_client[5])
+
+		self.conn.sendall(b"200 PORT command successful. Consider using PASV.\n")
+
+		return
+
+
+	''' Modo pasivo '''
+
+	''' El cliente abre el canal de coandos a través de un puerto (ej:1500). ''' 
+
+
+	def PASV(self,host,port):
+
+		self.passive_mode = True
+
+		self.dataServer = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+		self.dataServer.bind((host,port))
+		self.dataServer.listen(1)
+
+		(ip,port) = self.dataServer.getsockname()
+
+		ip = ','.join(ip.split('.'))
+
+		port = ','.join([str((port // 256)),str(port-((port // 256) * 256))])
+
+		msg = bytes("227 Entering Passive Mode ({},{}).\n".format(ip,port),encoding="utf-8")
+
+		self.conn.sendall(msg)
+
+		return
+
+
+	def LIST(self):
+
+		self.start_new_connection()
+		self.socket_.sendall(b"\r")
+		self.stop_new_connection()
+		self.conn.sendall(b'150 Here comes the directory listing.\n226 Directory send OK.\n')
+
+		return
+
 
 	def QUIT(self):
 
@@ -248,6 +336,19 @@ class Honeypot(Server):
 					elif (activity.startswith("USER")):
 						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
 						handler.USER()
+
+					elif (activity.startswith("PORT")):
+						print(" [\033[1;31m{}\033[0;39m] The intruder is using the Active mode to operate.".format(client[0],activity))
+						activity = activity.replace("PORT ","")
+						handler.PORT(activity)
+
+					elif (activity.startswith("PASV")):
+						print(" [\033[1;31m{}\033[0;39m] The intruder is using the Passive mode to operate.".format(client[0],activity))
+						handler.PASV(client[0],0)
+
+					elif (activity=="LIST"):
+						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
+						handler.LIST()
 
 					else:
 						print(" [\033[1;32mINFO\033[0;39m] Access to {} has been denied to run some commands".format(client[0],client[0]))
