@@ -27,16 +27,19 @@ pip3 install -r requirements.txt
 Abrimos el archivo "server.conf" con el editor que les parezca más cómodo. Entonces editan como más les guste:
 
 ```
+
 [DEFAULT]
 
 HOST = 0.0.0.0
-PORT = 21
+PORT = 5000
 
 
 [FTP]
 
-USER = test
-PASSWORD = test
+USER = kirari
+PASSWORD = toor
+CURRENT_DIRECTORY = /home/kirari/Server/
+
 
 ```
 
