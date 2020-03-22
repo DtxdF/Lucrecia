@@ -45,4 +45,4 @@ CURRENT_DIRECTORY = /home/kirari/Server/
 
 ## Uso de Lucrecia Honeypot ##
 
-<img src="img/img1.png" height="600" width="635">
+<img src="img/LucreciaUsage.png" height="600" width="635">
