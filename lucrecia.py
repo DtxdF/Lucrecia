@@ -6,6 +6,7 @@
 import sys
 import time
 import socket
+import logging
 import argparse
 import configparser
 
@@ -116,7 +117,13 @@ class HandlingFTP(object):
 
 	''' Modo pasivo '''
 
-	''' El cliente abre el canal de coandos a través de un puerto (ej:1500). ''' 
+	''' El cliente abre el canal de coandos a través de un puerto (ej:1500). 
+		Envía el comando PASV al servidor dirigido al puerto 21.
+		El comando cambia la transmisión al modo pasivo.
+		A través del canal de comandos, el servidor envía al cliente el puerto que escuchará el canal de datos, por ejemplo 2345.
+		El cliente abre el canal de datos en el puerto 1501 para el puerto 2345 del servidor.
+		El servidor confirma la conexión del canal de datos.
+		Los canales de comandos y datos están abiertos y listos para su actividad. ''' 
 
 
 	def PASV(self,host,port):
@@ -218,6 +225,10 @@ class Honeypot(Server):
 		self.password = conf[3]
 		self.currentDirectory = conf[4]
 
+		FORMAT = " [%(levelname)s] (%(asctime)-15s) <%(clientip)s::%(port)s> %(message)s"
+
+		logging.basicConfig(format=FORMAT,filename="Activity.log",level=logging.DEBUG)
+
 		print (" \033[1;39m[\033[1;34m*\033[1;39m] Honeypot Activaded...\n\033[0;39m")
 
 
@@ -261,6 +272,10 @@ class Honeypot(Server):
 			# Vericar si el atacante se logueo
 			self.isLoggedIn = False
 
+			data_info = {"clientip":client[0],'port':client[1]}
+
+			logging.warning("An intruder has accessed the FTP service", extra=data_info)
+
 			print(" [\033[1;33mWARNING\033[0;39m] Someone has accessed the FTP service from {} through port {}.".format(client[0],client[1]))
 
 			# Datos enviados por atacante
@@ -292,6 +307,8 @@ class Honeypot(Server):
 
 							dt_now = self.CalcTime()
 
+							logging.info("The intruder is logged in.", extra=data_info)
+
 							print(" [\033[1;34m{}\033[0;39m] The intruder is logged in at {} on {}.".format(client[0],dt_now[0],dt_now[1]))
 							#print(" [\033[1;32mDATETIME\033[1;39m] {}".format(dt.now()))
 
@@ -310,47 +327,60 @@ class Honeypot(Server):
 
 							dt_now = self.CalcTime()
 
+							logging.info("Intruder is trying to log in with credentials: {} -> {}".format(user,password), extra=data_info)
+
 							print(" [\033[1;32mINFO\033[0;39m] Intruder {} is trying to log in with credentials: {} -> {} at {} on {}".format(client[0],user,password,dt_now[0],dt_now[1]))
 							#print(" [\033[1;32mDatetime\033[1;39m] {}".format(dt.now()))
 
 							connection.sendall(b'530 Login incorrect.\n')
 
 					else:
+						logging.info("The intruder is trying to execute commands.", extra=data_info)
+
 						print(" [\033[1;31m{}\033[0;39m] The intruder is trying to execute commands".format(client[0]))
+
 						handler.FTPerror()	
 
 				else:
 
 					if (activity=="SYST") and (self.isLoggedIn==True):
+						logging.info("The intruder is trying to execute commands.", extra=data_info)
 						print(" [\033[1;31m{}\033[0;39m] The intruder is executing commands.".format(client[0]))
 						handler.SYST()
 
 					elif (activity=="PWD"):
+						logging.info("The intruder is using the {} command.".format(activity), extra=data_info)
 						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
 						handler.PWD(self.currentDirectory)
 
 					elif (activity=="CDUP"):
+						logging.info("The intruder is using the {} command.".format(activity), extra=data_info)
 						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
 						handler.CDUP()
 
 					elif (activity.startswith("USER")):
+						logging.info("The intruder is using the {} command.".format(activity), extra=data_info)
 						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
 						handler.USER()
 
 					elif (activity.startswith("PORT")):
+						logging.info("The intruder is using the Active mode to operate.", extra=data_info)
 						print(" [\033[1;31m{}\033[0;39m] The intruder is using the Active mode to operate.".format(client[0],activity))
 						activity = activity.replace("PORT ","")
 						handler.PORT(activity)
 
 					elif (activity.startswith("PASV")):
+						logging.info("The intruder is using the Passive mode to operate.", extra=data_info)
 						print(" [\033[1;31m{}\033[0;39m] The intruder is using the Passive mode to operate.".format(client[0],activity))
-						handler.PASV(client[0],0)
+						handler.PASV(client[0],0) # 0 -> indica un puerto aleatorio
 
 					elif (activity=="LIST"):
+						logging.info("The intruder is using the {} command.".format(activity), extra=data_info)
 						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
 						handler.LIST()
 
 					else:
+						logging.info("Intruder has been denied access to run some commands.", extra=data_info)
 						print(" [\033[1;32mINFO\033[0;39m] Access to {} has been denied to run some commands".format(client[0],client[0]))
 						handler.LIMIT_HP()
 
@@ -362,6 +392,7 @@ class Honeypot(Server):
 
 
 			handler.QUIT()
+			logging.info("Intruder has disconnected.", extra=data_info)
 			print(" [\033[1;34m{}\033[0;39m] Intruder has disconnected.".format(client[0]))
 
 
