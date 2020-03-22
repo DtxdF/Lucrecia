@@ -396,6 +396,12 @@ class Honeypot(Server):
 			print(" [\033[1;34m{}\033[0;39m] Intruder has disconnected.".format(client[0]))
 
 
+		except BrokenPipeError:
+
+			logging.info("Intruder has fallen", extra=data_info)
+			print(" [\033[1;34m{}\033[0;39m] Intruder has fallen.".format(client[0]))
+
+
 		except KeyboardInterrupt:
 
 			handler.DISCONNECT()
