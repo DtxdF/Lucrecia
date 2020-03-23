@@ -294,17 +294,12 @@ class Honeypot(Server):
 
 
 	@staticmethod
-	def msg_request(client,request):	
+	def msg_request(client,request,logging,data_info):	
 
+		logging.info("The intruder has sent a {} request.".format(request),extra=data_info)
 		print(" [\033[1;31m{}\033[0;39m] The intruder has sent a {} request.".format(client,request))
 
 		return
-
-
-	@staticmethod
-	def msg_logging(request):
-
-		return "The intruder has sent a {} request.".format(request)
 
 
 	def FTP(self,connection,client):
@@ -391,18 +386,15 @@ class Honeypot(Server):
 						handler.SYST()
 
 					elif (activity=="PWD"):
-						logging.info(self.msg_logging(activity), extra=data_info)
-						self.msg_request(client[0],activity)
+						self.msg_request(client[0],activity,logging,data_info)
 						handler.PWD(self.currentDirectory)
 
 					elif (activity=="CDUP"):
-						logging.info(self.msg_logging(activity).format(activity), extra=data_info)
-						self.msg_request(client[0],activity)
+						self.msg_request(client[0],activity,logging,data_info)
 						handler.CDUP()
 
 					elif (activity.startswith("USER")):
-						logging.info(self.msg_logging(activity), extra=data_info)
-						self.msg_request(client[0],activity)
+						self.msg_request(client[0],activity,logging,data_info)
 						handler.USER()
 
 					elif (activity.startswith("PORT")):
@@ -417,18 +409,15 @@ class Honeypot(Server):
 						handler.PASV(client[0],0) # 0 -> indica un puerto aleatorio
 
 					elif (activity=="LIST"):
-						logging.info(self.msg_logging(activity), extra=data_info)
-						self.msg_request(client[0],activity)
+						self.msg_request(client[0],activity,logging,data_info)
 						handler.LIST()
 
 					elif (activity.startswith("TYPE")):
-						logging.info(self.msg_logging(activity), extra=data_info)
-						self.msg_request(client[0],activity)
+						self.msg_request(client[0],activity,logging,data_info)
 						handler.TYPE(activity)
 
 					elif (activity=="NLST"):
-						logging.info(self.msg_logging(activity), extra=data_info)
-						self.msg_request(client[0],activity)
+						self.msg_request(client[0],activity,logging,data_info)
 						handler.NLST()
 
 					else:
