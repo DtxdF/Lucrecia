@@ -235,6 +235,7 @@ class Honeypot(Server):
 		self.user = conf[2]
 		self.password = conf[3]
 		self.currentDirectory = conf[4]
+		self.message = conf[5]
 
 		FORMAT = " [%(levelname)s] (%(asctime)-15s) <%(clientip)s::%(port)s> %(message)s"
 
@@ -257,7 +258,9 @@ class Honeypot(Server):
 
 			# Enviar primer trama
 
-			conn.sendall(b'220 (vsFTPd 3.0.3)\n')
+			welcome_msg = '220 {}\n'.format(self.message)
+
+			conn.sendall(bytes(welcome_msg,encoding="utf-8"))
 			
 			thread = Thread(name="Intruder "+str(cont),target=self.FTP,args=(conn,intruder,))
 			threads.append(thread)
@@ -408,7 +411,7 @@ class Honeypot(Server):
 				activity = activity.strip()
 
 
-				print("Petición: ",activity)
+				#print("Petición: ",activity)
 
 
 			handler.QUIT()
@@ -495,8 +498,9 @@ def FileConfiguration(file):
 	user = sectionFTP["USER"]
 	password = sectionFTP["PASSWORD"]
 	currentDirectory = sectionFTP["CURRENT_DIRECTORY"]
+	msg = sectionFTP["MSG"]
 
-	return (host,port,user,password,currentDirectory)
+	return (host,port,user,password,currentDirectory,msg)
 
 
 def main():
@@ -523,6 +527,7 @@ def main():
 	sArgs.add_argument('--directory', help='Set honeypot\'s current directory', type=str, default="/home/test/Server/", metavar="")
 	sArgs.add_argument('-U','--user', help="Set user", type=str, default="Testing")
 	sArgs.add_argument('-P','--password', help="Set password", type=str, default="toor", metavar="")
+	sArgs.add_argument('-m','--message', help="Set welcome message", type=str, default="Welcome to Lucrecia's FTP server (vsFTPd 3.0.3)", metavar="")
 
 	fArgs = parser.add_argument_group('\033[1;33mServer File Arguments\033[0;39m')
 	fArgs.add_argument('-f', '--file', help='File configurations')
@@ -536,6 +541,7 @@ def main():
 		args.directory = None
 		args.user = None
 		args.password = None
+		args.message = None
 
 		if isfile(args.file):
 			
@@ -555,9 +561,10 @@ def main():
 		 (args.directory) and \
 		 (args.user) and \
 		 (args.password) and \
-		 (args.directory):
+		 (args.directory) and \
+		 (args.message):
 
-			conf = (args.host,args.port,args.user,args.password,args.directory,)
+			conf = (args.host,args.port,args.user,args.password,args.directory,args.message,)
 
 			preparate(conf)		
 
