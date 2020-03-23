@@ -317,7 +317,7 @@ class Honeypot(Server):
 
 			# Datos enviados por atacante
 			activity = (connection.recv(2048)).decode(encoding="utf-8")
-			
+
 			# Manipulador de comandos FTP
 			handler = HandlingFTP(connection)
 
@@ -330,13 +330,19 @@ class Honeypot(Server):
 
 						user = (activity.strip()).split()[1]
 
-						#print(self.user)
+						#print(user)
 
 						connection.sendall(b"331 Please specify the password.\n")
 
 					elif (activity.startswith("PASS")):
+						
+						try:						
+							
+							password = (activity.strip()).split()[1]
 
-						password = (activity.strip()).split()[1]
+						except IndexError:
+
+							password = ""
 
 						#print(self.password)
 
@@ -429,7 +435,7 @@ class Honeypot(Server):
 				activity = activity.strip()
 
 
-				print("Petición: ",activity)
+				#print("Petición: ",activity)
 
 
 			handler.QUIT()
@@ -542,8 +548,8 @@ def main():
 	sArgs = parser.add_argument_group('\033[1;33mServer Arguments\033[0;39m')
 	sArgs.add_argument('-h', '--host', help='IP server', type=str)
 	sArgs.add_argument('-p', '--port', help='Port server', type=int, default=21)
-	sArgs.add_argument('--directory', help='Set honeypot\'s current directory', type=str, default="/home/test/Server/", metavar="")
-	sArgs.add_argument('-U','--user', help="Set user", type=str, default="Testing")
+	sArgs.add_argument('--directory', help='Set honeypot\'s current directory', type=str, default="/home/lucrecia/Server/", metavar="")
+	sArgs.add_argument('-U','--user', help="Set user", type=str, default="lucrecia")
 	sArgs.add_argument('-P','--password', help="Set password", type=str, default="toor", metavar="")
 	sArgs.add_argument('-m','--message', help="Set welcome message", type=str, default="Welcome to Lucrecia's FTP server (vsFTPd 3.0.3)", metavar="")
 
