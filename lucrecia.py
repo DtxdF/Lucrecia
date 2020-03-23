@@ -11,6 +11,7 @@ import argparse
 import configparser
 
 from os import system
+from random import choice as rand
 from os.path import isfile
 from threading import Thread
 from datetime import datetime as dt
@@ -63,6 +64,8 @@ class HandlingFTP(object):
 
 		self.conn = conn
 		self.passive_mode = False
+
+		self.list_directory = ""
 
 
 	def start_new_connection(self):
@@ -147,20 +150,48 @@ class HandlingFTP(object):
 		return
 
 
-	def LIST(self):
+	def LIST(self,directory):
+
+		data_files = [
+		
+		["r-x------","rwx------","rw-------"],
+		["5513 ","45550","1351 ","4096 ","1024 ","54324"],
+		["Feb 7 ", "Dec 12", "Nov 28", "Jan 4 "],
+
+		]
+
+		if (self.list_directory==""):
+
+			msg = "\r"
+
+			for file in directory:
+
+				msg += "-{}    1 0        0            {} {}  2019 {}\r\n".format(rand(data_files[0]),rand(data_files[1]),rand(data_files[2]),file)
+
+			msg += "\r"
+
+			self.list_directory = msg
+
 
 		self.start_new_connection()
-		self.socket_.sendall(b"\r")
+		self.socket_.sendall(bytes(self.list_directory,encoding="utf-8"))
 		self.stop_new_connection()
 		self.conn.sendall(b'150 Here comes the directory listing.\n226 Directory send OK.\n')
 
 		return
 
 
-	def NLST(self):
+	def NLST(self,directory):
+
+		msg = "\r"
+
+		for file in directory:
+			msg += "{}\r\n".format(file)
+
+		msg += "\r"
 
 		self.start_new_connection()
-		self.socket_.sendall(b"\r")
+		self.socket_.sendall(bytes(msg,encoding="utf-8"))
 		self.stop_new_connection()
 		self.conn.sendall(b'150 Here comes the directory listing.\n226 Directory send OK.\n')
 
@@ -174,6 +205,13 @@ class HandlingFTP(object):
 		if (data=="A"):
 
 			self.conn.sendall(b'200 Switching to ASCII mode.\n')
+
+		#elif (data=="I"):
+
+		#	self.start_new_connection()
+		#	self.socket_.sendall(bytes(msg,encoding="utf-8"))
+		#	self.stop_new_connection()
+		#	self.conn.sendall(b'150 Opening BINARY mode data connection for net.txt (- bytes).\n226 Transfer complete.\n')
 
 		return
 
@@ -214,6 +252,13 @@ class HandlingFTP(object):
 		return
 
 
+	def MKD(self):
+
+		self.conn.sendall(b'257 Directory created.\n')
+
+		return
+
+	
 	def FTPerror(self):
 
 		self.conn.sendall(b'530 Please login with USER and PASS.\n')
@@ -246,6 +291,10 @@ class Honeypot(Server):
 		self.password = conf[3]
 		self.currentDirectory = conf[4]
 		self.message = conf[5]
+
+		self.directory = conf[6].split(',')
+
+		#print(self.directory)
 
 		FORMAT = " [%(levelname)s] (%(asctime)-15s) <%(clientip)s::%(port)s> %(message)s"
 
@@ -416,7 +465,7 @@ class Honeypot(Server):
 
 					elif (activity=="LIST"):
 						self.msg_request(client[0],activity,logging,data_info)
-						handler.LIST()
+						handler.LIST(self.directory)
 
 					elif (activity.startswith("TYPE")):
 						self.msg_request(client[0],activity,logging,data_info)
@@ -424,7 +473,11 @@ class Honeypot(Server):
 
 					elif (activity=="NLST"):
 						self.msg_request(client[0],activity,logging,data_info)
-						handler.NLST()
+						handler.NLST(self.directory)
+
+					elif (activity.startswith("MKD")):
+						self.msg_request(client[0],activity,logging,data_info)
+						handler.MKD()
 
 					else:
 						logging.info("Intruder has been denied access to run some commands.", extra=data_info)
@@ -523,8 +576,9 @@ def FileConfiguration(file):
 	password = sectionFTP["PASSWORD"]
 	currentDirectory = sectionFTP["CURRENT_DIRECTORY"]
 	msg = sectionFTP["MSG"]
+	directory = sectionFTP["DIRECTORY_FILES"]
 
-	return (host,port,user,password,currentDirectory,msg)
+	return (host,port,user,password,currentDirectory,msg,directory)
 
 
 def main():
@@ -541,6 +595,7 @@ def main():
 	parser.epilog = """
 
 \033[1;31mExample:\033[0;39m lucrecia.py -h 192.168.0.18 -p 21
+         lucrecia.py -h 192.168.0.18 -p 5000 -U lucrecia -P toor
          lucrecia.py -f server.conf 
 		
 		"""
@@ -548,7 +603,7 @@ def main():
 	sArgs = parser.add_argument_group('\033[1;33mServer Arguments\033[0;39m')
 	sArgs.add_argument('-h', '--host', help='IP server', type=str)
 	sArgs.add_argument('-p', '--port', help='Port server', type=int, default=21)
-	sArgs.add_argument('--directory', help='Set honeypot\'s current directory', type=str, default="/home/lucrecia/Server/", metavar="")
+	sArgs.add_argument('-d','--directory', help='Set honeypot\'s current directory', type=str, default="/home/lucrecia/Server/", metavar="")
 	sArgs.add_argument('-U','--user', help="Set user", type=str, default="lucrecia")
 	sArgs.add_argument('-P','--password', help="Set password", type=str, default="toor", metavar="")
 	sArgs.add_argument('-m','--message', help="Set welcome message", type=str, default="Welcome to Lucrecia's FTP server (vsFTPd 3.0.3)", metavar="")
