@@ -157,7 +157,17 @@ class HandlingFTP(object):
 		return
 
 
-	def ASCII(self,data):
+	def NLST(self):
+
+		self.start_new_connection()
+		self.socket_.sendall(b"\r")
+		self.stop_new_connection()
+		self.conn.sendall(b'150 Here comes the directory listing.\n226 Directory send OK.\n')
+
+		return
+
+
+	def TYPE(self,data):
 
 		data = data.split()[1]
 
@@ -283,6 +293,20 @@ class Honeypot(Server):
 		return (time_,date_)
 
 
+	@staticmethod
+	def msg_request(client,request):	
+
+		print(" [\033[1;31m{}\033[0;39m] The intruder has sent a {} request.".format(client,request))
+
+		return
+
+
+	@staticmethod
+	def msg_logging(request):
+
+		return "The intruder has sent a {} request.".format(request)
+
+
 	def FTP(self,connection,client):
 
 		try:
@@ -367,18 +391,18 @@ class Honeypot(Server):
 						handler.SYST()
 
 					elif (activity=="PWD"):
-						logging.info("The intruder is using the {} command.".format(activity), extra=data_info)
-						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
+						logging.info(self.msg_logging(activity), extra=data_info)
+						self.msg_request(client[0],activity)
 						handler.PWD(self.currentDirectory)
 
 					elif (activity=="CDUP"):
-						logging.info("The intruder is using the {} command.".format(activity), extra=data_info)
-						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
+						logging.info(self.msg_logging(activity).format(activity), extra=data_info)
+						self.msg_request(client[0],activity)
 						handler.CDUP()
 
 					elif (activity.startswith("USER")):
-						logging.info("The intruder is using the {} command.".format(activity), extra=data_info)
-						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
+						logging.info(self.msg_logging(activity), extra=data_info)
+						self.msg_request(client[0],activity)
 						handler.USER()
 
 					elif (activity.startswith("PORT")):
@@ -393,14 +417,19 @@ class Honeypot(Server):
 						handler.PASV(client[0],0) # 0 -> indica un puerto aleatorio
 
 					elif (activity=="LIST"):
-						logging.info("The intruder is using the {} command.".format(activity), extra=data_info)
-						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
+						logging.info(self.msg_logging(activity), extra=data_info)
+						self.msg_request(client[0],activity)
 						handler.LIST()
 
 					elif (activity.startswith("TYPE")):
-						logging.info("The intruder is using the ASCII command.", extra=data_info)
-						print(" [\033[1;31m{}\033[0;39m] The intruder is using the ASCII command.".format(client[0]))
-						handler.ASCII(activity)
+						logging.info(self.msg_logging(activity), extra=data_info)
+						self.msg_request(client[0],activity)
+						handler.TYPE(activity)
+
+					elif (activity=="NLST"):
+						logging.info(self.msg_logging(activity), extra=data_info)
+						self.msg_request(client[0],activity)
+						handler.NLST()
 
 					else:
 						logging.info("Intruder has been denied access to run some commands.", extra=data_info)
@@ -411,7 +440,7 @@ class Honeypot(Server):
 				activity = activity.strip()
 
 
-				#print("Petición: ",activity)
+				print("Petición: ",activity)
 
 
 			handler.QUIT()
