@@ -157,6 +157,17 @@ class HandlingFTP(object):
 		return
 
 
+	def ASCII(self,data):
+
+		data = data.split()[1]
+
+		if (data=="A"):
+
+			self.conn.sendall(b'200 Switching to ASCII mode.\n')
+
+		return
+
+
 	def QUIT(self):
 
 		self.conn.sendall(b'221 Goodbye.\n')
@@ -229,10 +240,14 @@ class Honeypot(Server):
 
 		logging.basicConfig(format=FORMAT,filename="Activity.log",level=logging.DEBUG)
 
-		print (" \033[1;39m[\033[1;34m*\033[1;39m] Honeypot Activaded...\n\033[0;39m")
+		print (" \033[0;39m[\033[1;34m+\033[0;39m] Honeypot ready!")
 
 
 	def run(self):
+
+		time.sleep(1.3)
+
+		print (" \033[0;39m[\033[1;32m+\033[0;39m] Honeypot Activaded...\n")
 
 		cont = 1
 
@@ -379,6 +394,11 @@ class Honeypot(Server):
 						print(" [\033[1;31m{}\033[0;39m] The intruder is using the {} command.".format(client[0],activity))
 						handler.LIST()
 
+					elif (activity.startswith("TYPE")):
+						logging.info("The intruder is using the ASCII command.", extra=data_info)
+						print(" [\033[1;31m{}\033[0;39m] The intruder is using the ASCII command.".format(client[0]))
+						handler.ASCII(activity)
+
 					else:
 						logging.info("Intruder has been denied access to run some commands.", extra=data_info)
 						print(" [\033[1;32mINFO\033[0;39m] Access to {} has been denied to run some commands".format(client[0],client[0]))
@@ -388,7 +408,7 @@ class Honeypot(Server):
 				activity = activity.strip()
 
 
-				#print("Petición: ",activity)
+				print("Petición: ",activity)
 
 
 			handler.QUIT()
@@ -431,6 +451,10 @@ def banner():
 def preparate(conf):
 
 	try:
+
+		print (" \033[0;39m[\033[1;34m*\033[0;39m] Lucrecia is preparing the Honeypot...")
+
+		time.sleep(2)
 
 		honeypot = Honeypot(conf)
 		honeypot.start()
