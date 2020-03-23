@@ -36,9 +36,10 @@ PORT = 5000
 
 [FTP]
 
-USER = kirari
+USER = lucrecia
 PASSWORD = toor
-CURRENT_DIRECTORY = /home/kirari/Server/
+CURRENT_DIRECTORY = /home/lucrecia/Server/
+MSG = Welcome to Lucrecia's FTP server (vsFTPd 3.0.3)
 
 
 ```
