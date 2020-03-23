@@ -7,7 +7,7 @@
     <a href="https://github.com/Kirari-Senpai?tab=repositories"><img src="https://img.shields.io/badge/Ver%20m%C3%A1s-repositorios-yellow"></a>
     <br><br>
     
-Lucrecia es un simple honeypot de media interacción para atacantes con servicio FTP.
+Lucrecia es un simple Honeypot FTP de media interacción.
 </p>
 
 ## Clonar el repositorio ##
