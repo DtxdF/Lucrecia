@@ -44,7 +44,17 @@ class Server(object):
 	def start(self):
 
 		self.create_socket()
-		self.server.bind((self.host,self.port))
+		
+		try:
+		
+			self.server.bind((self.host,self.port))
+		
+		except OSError:
+
+			print(" \033[1;39m[\033[1;31mx\033[1;39m] Another process is already using port {}\n".format(self.port))
+
+			sys.exit(0)
+
 		self.server.listen(10)
 
 		return 
