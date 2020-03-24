@@ -46,4 +46,4 @@ MSG = Welcome to Lucrecia's FTP server (vsFTPd 3.0.3)
 
 ## Uso de Lucrecia Honeypot ##
 
-<img src="img/LucreciaUsage1.png" height="600" width="635">
+<img src="img/LucreciaUsage2.png" height="600" width="635">
