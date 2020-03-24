@@ -206,7 +206,9 @@ class HandlingFTP(object):
 
 			self.conn.sendall(b'200 Switching to ASCII mode.\n')
 
-		#elif (data=="I"):
+		elif (data=="I"):
+
+			self.LIMIT_HP()
 
 		#	self.start_new_connection()
 		#	self.socket_.sendall(bytes(msg,encoding="utf-8"))
@@ -604,6 +606,7 @@ def main():
 	sArgs.add_argument('-h', '--host', help='IP server', type=str)
 	sArgs.add_argument('-p', '--port', help='Port server', type=int, default=21)
 	sArgs.add_argument('-d','--directory', help='Set honeypot\'s current directory', type=str, default="/home/lucrecia/Server/", metavar="")
+	sArgs.add_argument('-df','--directory-files', help="Set fake files", dest="dfiles", type=str, default="myPictures.zip", metavar="")
 	sArgs.add_argument('-U','--user', help="Set user", type=str, default="lucrecia")
 	sArgs.add_argument('-P','--password', help="Set password", type=str, default="toor", metavar="")
 	sArgs.add_argument('-m','--message', help="Set welcome message", type=str, default="Welcome to Lucrecia's FTP server (vsFTPd 3.0.3)", metavar="")
@@ -621,6 +624,7 @@ def main():
 		args.user = None
 		args.password = None
 		args.message = None
+		args.dfiles = None
 
 		if isfile(args.file):
 			
@@ -641,9 +645,10 @@ def main():
 		 (args.user) and \
 		 (args.password) and \
 		 (args.directory) and \
-		 (args.message):
+		 (args.message) and \
+		 (args.dfiles):
 
-			conf = (args.host,args.port,args.user,args.password,args.directory,args.message,)
+			conf = (args.host,args.port,args.user,args.password,args.directory,args.message,args.dfiles,)
 
 			preparate(conf)		
 
