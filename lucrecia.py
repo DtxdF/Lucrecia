@@ -325,18 +325,25 @@ class Honeypot(Server):
 
 		while (True):
 
-			(conn,intruder) = self.server.accept() 	
+			try:
 
-			# Enviar primer trama
+				(conn,intruder) = self.server.accept() 	
 
-			welcome_msg = '220 {}\n'.format(self.message)
+				# Enviar primer trama
 
-			conn.sendall(bytes(welcome_msg,encoding="utf-8"))
-			
-			thread = Thread(name="Intruder "+str(cont),target=self.FTP,args=(conn,intruder,))
-			threads.append(thread)
-			thread.setDaemon(True)
-			thread.start()
+				welcome_msg = '220 {}\n'.format(self.message)
+
+				conn.sendall(bytes(welcome_msg,encoding="utf-8"))
+				
+				thread = Thread(name="Intruder "+str(cont),target=self.FTP,args=(conn,intruder,))
+				threads.append(thread)
+				thread.setDaemon(True)
+				thread.start()
+
+			except ConnectionResetError:
+
+				print(" \033[1;39m[\033[1;31mx\033[1;39m] Connection to a possible intruder has been lost.\n")
+				conn.close()
 
 			cont += 1
 
@@ -608,6 +615,8 @@ def main():
 
 \033[1;31mExample:\033[0;39m lucrecia.py -h 192.168.0.18 -p 21
          lucrecia.py -h 192.168.0.18 -p 5000 -U lucrecia -P toor
+         lucrecia.py -h 192.168.0.18 -p 5000 -d "/home/lucrecia/ftp"
+         lucrecia.py -h 192.168.0.18 --directory-files "myPictures.zip,overflow.c"
          lucrecia.py -f server.conf 
 		
 		"""
@@ -616,7 +625,7 @@ def main():
 	sArgs.add_argument('-h', '--host', help='IP server', type=str)
 	sArgs.add_argument('-p', '--port', help='Port server', type=int, default=21)
 	sArgs.add_argument('-d','--directory', help='Set honeypot\'s current directory', type=str, default="/home/lucrecia/Server/", metavar="")
-	sArgs.add_argument('-df','--directory-files', help="Set fake files", dest="dfiles", type=str, default="myPictures.zip", metavar="")
+	sArgs.add_argument('--directory-files', help="Set fake files", dest="dfiles", type=str, default="myPictures.zip", metavar="")
 	sArgs.add_argument('-U','--user', help="Set user", type=str, default="lucrecia")
 	sArgs.add_argument('-P','--password', help="Set password", type=str, default="toor", metavar="")
 	sArgs.add_argument('-m','--message', help="Set welcome message", type=str, default="Welcome to Lucrecia's FTP server (vsFTPd 3.0.3)", metavar="")
