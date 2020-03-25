@@ -418,9 +418,9 @@ class Honeypot(Server):
 
 							dt_now = self.CalcTime()
 
-							logging.info("The intruder is logged in.", extra=data_info)
+							logging.info("The intruder is logged in with credentials: {} -> {}.".format(user,password), extra=data_info)
 
-							print(" [\033[1;34m{}\033[0;39m] The intruder is logged in at {} on {}.".format(client[0],dt_now[0],dt_now[1]))
+							print(" [\033[1;34m{}\033[0;39m] The intruder is logged in with credentials: {} -> {} at {} on {}.".format(client[0],user,password,dt_now[0],dt_now[1]))
 							#print(" [\033[1;32mDATETIME\033[1;39m] {}".format(dt.now()))
 
 							connection.sendall('230 Login successful.\n'.encode())
