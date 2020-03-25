@@ -38,8 +38,9 @@ PORT = 5000
 
 USER = lucrecia
 PASSWORD = toor
-CURRENT_DIRECTORY = /home/lucrecia/Server/
+CURRENT_DIRECTORY = /home/lucrecia/ftp/
 MSG = Welcome to Lucrecia's FTP server (vsFTPd 3.0.3)
+DIRECTORY_FILES = client.py,test.c,prototype.c
 
 
 ```
